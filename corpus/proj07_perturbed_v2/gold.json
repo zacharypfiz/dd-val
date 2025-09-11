@@ -1,66 +1,66 @@
 [
   {
     "type": "missing_column_in_data",
-    "variable": "visit_date_v2",
-    "rows_affected": 200
+    "variable": "age",
+    "rows_affected": 500
   },
   {
     "type": "extra_column_in_data",
     "variable": "extra_col",
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "type_mismatch",
     "variable": "record_id",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 26
-  },
-  {
-    "type": "type_mismatch",
-    "variable": "age",
-    "expected": "numeric",
-    "observed": "string",
-    "rows_affected": 41
+    "rows_affected": 70
   },
   {
     "type": "type_mismatch",
     "variable": "height_cm",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 28
+    "rows_affected": 60
   },
   {
     "type": "type_mismatch",
     "variable": "weight_kg",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 35
+    "rows_affected": 73
   },
   {
     "type": "type_mismatch",
     "variable": "bp_sys",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 33
+    "rows_affected": 71
   },
   {
     "type": "type_mismatch",
     "variable": "bp_dia",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 30
+    "rows_affected": 79
   },
   {
     "type": "type_mismatch",
     "variable": "visit_date_v1",
     "expected": "date_ymd",
     "observed": "date_mdy",
-    "rows_affected": 33
+    "rows_affected": 89
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v2",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 86
   },
   {
     "type": "domain_mismatch",
-    "variable": "adls_dress",
+    "variable": "adls_wash",
     "expected": [
       "0=No",
       "1=Yes"
@@ -70,20 +70,25 @@
       "1",
       "9"
     ],
-    "rows_affected": 22
+    "rows_affected": 48
   },
   {
     "type": "unit_anomaly",
     "variable": "height_cm",
     "expected_unit": "cm",
     "note": "subset appears inches",
-    "rows_affected": 17
+    "rows_affected": 56
+  },
+  {
+    "type": "missingness_spike",
+    "variable": "visit_date_v2",
+    "rows_affected": 395
   },
   {
     "type": "rename_drift",
     "variable": "bp_sys",
     "observed": "sbp",
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "checkbox_expansion_mismatch",
@@ -91,13 +96,13 @@
     "observed_added": [
       "symptoms___999"
     ],
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "branching_mismatch",
     "variable": "pregnant",
     "condition": "[sex] = '1'",
-    "rows_affected": 14
+    "rows_affected": 56
   },
   {
     "type": "matrix_nonconsecutive",
@@ -115,6 +120,6 @@
   {
     "type": "extra_column_since_last_run",
     "variable": "new_since_last_run",
-    "rows_affected": 200
+    "rows_affected": 500
   }
 ]

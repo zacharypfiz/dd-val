@@ -1,66 +1,73 @@
 [
   {
     "type": "missing_column_in_data",
-    "variable": "weight_kg",
-    "rows_affected": 200
+    "variable": "pregnant",
+    "rows_affected": 500
   },
   {
     "type": "extra_column_in_data",
     "variable": "extra_col",
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "type_mismatch",
     "variable": "record_id",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 37
+    "rows_affected": 91
   },
   {
     "type": "type_mismatch",
     "variable": "age",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 33
+    "rows_affected": 68
   },
   {
     "type": "type_mismatch",
     "variable": "height_cm",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 37
+    "rows_affected": 65
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "weight_kg",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 63
   },
   {
     "type": "type_mismatch",
     "variable": "bp_sys",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 39
+    "rows_affected": 76
   },
   {
     "type": "type_mismatch",
     "variable": "bp_dia",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 26
+    "rows_affected": 78
   },
   {
     "type": "type_mismatch",
     "variable": "visit_date_v1",
     "expected": "date_ymd",
     "observed": "date_mdy",
-    "rows_affected": 38
+    "rows_affected": 102
   },
   {
     "type": "type_mismatch",
     "variable": "visit_date_v2",
     "expected": "date_ymd",
     "observed": "date_mdy",
-    "rows_affected": 45
+    "rows_affected": 108
   },
   {
     "type": "domain_mismatch",
-    "variable": "adls_dress",
+    "variable": "adls_wash",
     "expected": [
       "0=No",
       "1=Yes"
@@ -70,25 +77,25 @@
       "1",
       "9"
     ],
-    "rows_affected": 18
+    "rows_affected": 36
   },
   {
     "type": "unit_anomaly",
     "variable": "height_cm",
     "expected_unit": "cm",
     "note": "subset appears inches",
-    "rows_affected": 21
+    "rows_affected": 69
   },
   {
     "type": "missingness_spike",
     "variable": "visit_date_v2",
-    "rows_affected": 165
+    "rows_affected": 388
   },
   {
     "type": "rename_drift",
     "variable": "bp_sys",
     "observed": "sbp",
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "checkbox_expansion_mismatch",
@@ -96,13 +103,7 @@
     "observed_added": [
       "symptoms___999"
     ],
-    "rows_affected": 200
-  },
-  {
-    "type": "branching_mismatch",
-    "variable": "pregnant",
-    "condition": "[sex] = '1'",
-    "rows_affected": 15
+    "rows_affected": 500
   },
   {
     "type": "matrix_nonconsecutive",
@@ -120,6 +121,6 @@
   {
     "type": "extra_column_since_last_run",
     "variable": "new_since_last_run",
-    "rows_affected": 200
+    "rows_affected": 500
   }
 ]

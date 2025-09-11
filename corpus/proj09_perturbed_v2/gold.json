@@ -1,101 +1,98 @@
 [
   {
     "type": "missing_column_in_data",
-    "variable": "pain_severity",
-    "rows_affected": 200
+    "variable": "visit_date_v1",
+    "rows_affected": 500
   },
   {
     "type": "extra_column_in_data",
     "variable": "extra_col",
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "type_mismatch",
     "variable": "record_id",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 30
+    "rows_affected": 87
   },
   {
     "type": "type_mismatch",
     "variable": "age",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 28
+    "rows_affected": 73
   },
   {
     "type": "type_mismatch",
     "variable": "height_cm",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 34
+    "rows_affected": 65
   },
   {
     "type": "type_mismatch",
     "variable": "weight_kg",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 25
+    "rows_affected": 71
   },
   {
     "type": "type_mismatch",
     "variable": "bp_sys",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 28
+    "rows_affected": 76
   },
   {
     "type": "type_mismatch",
     "variable": "bp_dia",
     "expected": "numeric",
     "observed": "string",
-    "rows_affected": 31
-  },
-  {
-    "type": "type_mismatch",
-    "variable": "visit_date_v1",
-    "expected": "date_ymd",
-    "observed": "date_mdy",
-    "rows_affected": 43
+    "rows_affected": 78
   },
   {
     "type": "type_mismatch",
     "variable": "visit_date_v2",
     "expected": "date_ymd",
     "observed": "date_mdy",
-    "rows_affected": 32
+    "rows_affected": 82
   },
   {
     "type": "domain_mismatch",
-    "variable": "sex",
+    "variable": "satisfaction",
     "expected": [
-      "0=Male",
-      "1=Female"
+      "1=Poor",
+      "2=Fair",
+      "3=Good",
+      "4=Excellent"
     ],
     "observed": [
-      "0",
       "1",
+      "2",
+      "3",
+      "4",
       "9"
     ],
-    "rows_affected": 23
+    "rows_affected": 48
   },
   {
     "type": "unit_anomaly",
     "variable": "height_cm",
     "expected_unit": "cm",
     "note": "subset appears inches",
-    "rows_affected": 23
+    "rows_affected": 42
   },
   {
     "type": "missingness_spike",
     "variable": "visit_date_v2",
-    "rows_affected": 160
+    "rows_affected": 391
   },
   {
     "type": "rename_drift",
     "variable": "bp_sys",
     "observed": "sbp",
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "checkbox_expansion_mismatch",
@@ -103,13 +100,13 @@
     "observed_added": [
       "symptoms___999"
     ],
-    "rows_affected": 200
+    "rows_affected": 500
   },
   {
     "type": "branching_mismatch",
     "variable": "pregnant",
     "condition": "[sex] = '1'",
-    "rows_affected": 17
+    "rows_affected": 48
   },
   {
     "type": "matrix_nonconsecutive",
@@ -127,6 +124,6 @@
   {
     "type": "extra_column_since_last_run",
     "variable": "new_since_last_run",
-    "rows_affected": 200
+    "rows_affected": 500
   }
 ]
