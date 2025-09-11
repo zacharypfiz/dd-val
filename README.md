@@ -1,64 +1,123 @@
-# Data Dictionary Validator (DD-Val)
+# DD-Val: REDCap Eval Corpus + Scoring
 
 ## Overview
 
-DD-Val is a lightweight, local-first command-line tool that automates the validation of a dataset against its data dictionary. It produces a single, actionable report that instantly identifies discrepancies and changes, empowering analysts to systematically identify all data quality issues in minutes, not hours.
+This repo provides deterministic, programmatic tooling to build a REDCap-only evaluation corpus and score a validator’s findings against a gold standard. It is meant to exercise a separate validator CLI you bring (e.g., your `dd-val`), not to perform validation itself.
 
-## Problem Statement
-
-Biostatisticians and research analysts spend significant, unpredictable amounts of time resolving discrepancies between research datasets and their corresponding data dictionaries. This manual "back-and-forth" with study teams is driven by two primary issues: (1) incomplete or inaccurate dictionaries (ambiguity) and (2) changes to the data's structure between refreshes (schema drift).
-
-## Features
-
-- **Dictionary vs. Data Reconciliation:** Identifies missing columns, extra columns, type mismatches, and domain mismatches.
-- **Change Detection:** Compares against previous reports to detect schema changes.
-- **Actionable Reports:** Generates HTML report and JSON findings file.
-- **Query Pack:** Auto-generated questions for study teams.
-
-## Usage
-
-```bash
-dd-val -dict <dictionary_file> -data <dataset_file> [-prev <previous_findings.json>]
-```
-
-## Inputs
-
-- `-dict`: Path to the data dictionary file (`.csv`, `.xlsx`).
-- `-data`: Path to the dataset file (`.csv`, `.parquet`).
-- `-prev` (Optional): Path to a previous `findings.json` output file.
-
-## Outputs
-
-- `report.html`: Human-readable validation report.
-- `findings.json`: Machine-readable list of findings.
+What you get:
+- Reproducible clean REDCap projects (dictionary.csv + dataset.csv)
+- Perturbed variants with controlled error recipes and gold.json ground truth
+- A pluggable runner to execute your validator across the corpus
+- A scorer to compute per-issue precision/recall/F1
 
 ## Requirements
 
-- Python 3.x
-- Dependencies: pandas, openpyxl, pyarrow (for Parquet support)
+- Python 3.9+
+- uv (recommended) for running commands: https://docs.astral.sh/uv/
+- No external Python dependencies required
 
-## Installation
+## Quick Start (uv)
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/zacharypfiz/dd-val.git
-   cd dd-val
-   ```
+Seed a corpus (10 projects × 500 rows):
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+uv run dd-seed --out corpus --projects 10 --rows 500 --seed 42
+```
 
-3. Run the tool:
-   ```bash
-   python dd_val.py -dict dictionary.csv -data data.csv
-   ```
+Run the included validator across clean and perturbed sets:
 
-## Development
+```bash
+VALIDATOR_CMD='uv run dd-val --dict {dict} --data {data} --out {out} --html {html}' \
+  scripts/validate_all.sh
 
-This project is in early development. For contributions, please see the project requirements in `project.md`.
+Noise gate for clean runs (optional):
 
-## License
+```bash
+CLEAN_STRICT=1 VALIDATOR_CMD='uv run dd-val --dict {dict} --data {data} --out {out} --html {html}' \
+  scripts/validate_all.sh
+```
+This fails the run if any clean project emits an error finding (warnings are reported but do not fail).
+```
 
-[Add license here]
+Score your findings against the gold truth:
+
+```bash
+uv run dd-score --corpus corpus --mode variable
+```
+
+Make targets (convenience):
+
+```bash
+make seed       # uv run dd-seed …
+make validate   # scripts/validate_all.sh using $VALIDATOR_CMD
+make score      # uv run dd-score …
+```
+
+## CLI Commands
+
+- `dd-seed`: Generate clean + perturbed corpora.
+  - `--out`: Output directory (default: `corpus`)
+  - `--projects`: Number of projects (default: `10`)
+  - `--rows`: Rows per project (default: `500`)
+  - `--seed`: RNG seed (default: `42`)
+
+- `dd-val`: Validate a dataset against a dictionary and produce `report.html` and `findings.json`.
+  - `--dict`: Path to dictionary CSV
+  - `--data`: Path to dataset CSV
+  - `--out`: Output findings.json path
+  - `--html`: Output HTML report path
+  - `--prev`: Optional previous findings.json to emit “since last run” diffs
+
+- `scripts/validate_all.sh`: Run your validator on each perturbed project.
+  - Set `VALIDATOR_CMD` with placeholders: `{dict} {data} {out} {html}`
+  - Example: `VALIDATOR_CMD='dd-val --dict {dict} --data {data} --out {out} --html {html}'`
+  - Produces per-project `findings.json` and `report.html` alongside inputs
+
+- `dd-score`: Compare `findings.json` vs `gold.json` across the corpus.
+  - `--corpus`: Corpus directory (default: `corpus`)
+  - `--mode`: Matching mode: `variable` (type+variable) or `strict` (type+variable+expected/observed)
+
+## Corpus Layout
+
+```
+corpus/
+  proj01_clean/
+    dictionary.csv
+    dataset.csv
+  proj01_perturbed/
+    dictionary.csv
+    dataset.csv
+    gold.json
+  proj01_perturbed_v2/
+    dictionary.csv     # may differ from perturbed
+    dataset.csv        # since-last-run changes
+    gold.json          # union of v1 + v2 changes
+  …
+```
+
+## Error Recipes (gold truth)
+
+Perturbations are deterministic with the seed and include:
+- Missing/extra columns (data vs. dictionary)
+- Type drift (numeric → string; date_ymd → date_mdy subset)
+- Domain drift (unseen categorical levels)
+- Unit anomalies (subset looks like unit-converted values)
+- Missingness spikes (structured blanks)
+- Rename drift (e.g., `bp_sys` → `sbp` in data)
+- Checkbox expansion mismatch (`var___code` differences)
+- Branching mismatch (values appearing outside logic)
+- Matrix break (non-consecutive dictionary rows)
+- Since-last-run: new categories/columns in v2
+
+Each injected issue is logged in `gold.json` as a compact record, e.g.:
+
+```json
+{"type":"domain_mismatch","variable":"sex","expected":["0=Male","1=Female"],"observed":["0","1","9"],"rows_affected":20}
+```
+
+## Notes
+
+- Clean datasets strictly conform to their `dictionary.csv` (REDCap A–R headers).
+- Checkbox fields expand to `var___code` columns in `dataset.csv`.
+- Use `--seed` to keep runs fully reproducible.
+- Bring your own validator CLI; this repo focuses on corpus + scoring.

@@ -1,0 +1,105 @@
+[
+  {
+    "type": "missing_column_in_data",
+    "variable": "adls_wash",
+    "rows_affected": 200
+  },
+  {
+    "type": "extra_column_in_data",
+    "variable": "extra_col",
+    "rows_affected": 200
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "record_id",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 37
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "age",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 21
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "height_cm",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 22
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "weight_kg",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 26
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v1",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 41
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v2",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 40
+  },
+  {
+    "type": "domain_mismatch",
+    "variable": "adls_dress",
+    "expected": [
+      "0=No",
+      "1=Yes"
+    ],
+    "observed": [
+      "0",
+      "1",
+      "9"
+    ],
+    "rows_affected": 19
+  },
+  {
+    "type": "unit_anomaly",
+    "variable": "height_cm",
+    "expected_unit": "cm",
+    "note": "subset appears inches",
+    "rows_affected": 20
+  },
+  {
+    "type": "missingness_spike",
+    "variable": "visit_date_v2",
+    "rows_affected": 159
+  },
+  {
+    "type": "rename_drift",
+    "variable": "height_cm",
+    "observed": "ht_cm",
+    "rows_affected": 200
+  },
+  {
+    "type": "checkbox_expansion_mismatch",
+    "variable": "symptoms",
+    "observed_added": [
+      "symptoms___999"
+    ],
+    "rows_affected": 200
+  },
+  {
+    "type": "branching_mismatch",
+    "variable": "pregnant",
+    "condition": "[sex] = '1'",
+    "rows_affected": 14
+  },
+  {
+    "type": "matrix_nonconsecutive",
+    "variable": "adls",
+    "rows_affected": 0
+  }
+]

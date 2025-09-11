@@ -1,0 +1,20 @@
+[project]
+name = "dd-eval"
+version = "0.1.0"
+description = "Deterministic REDCap eval corpus generator and scorer"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Proprietary"}
+authors = [{name = "DD-Val"}]
+
+[project.scripts]
+dd-seed = "dd_eval.seed:main"
+dd-score = "dd_eval.score:main"
+dd-val = "dd_val.cli:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+dev-dependencies = []
