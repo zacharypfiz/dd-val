@@ -52,6 +52,14 @@ def main(argv: List[str] | None = None) -> None:
     for _ in iter_dataset_rows(data_path):
         n_rows += 1
 
+    # If previous findings are provided, pre-compute previous dataset columns
+    prev_cols: set[str] = set()
+    if prev and prev.exists():
+        prev_obj = _read_prev(prev)
+        if isinstance(prev_obj, dict):
+            prev_sum = prev_obj.get("summary") or {}
+            prev_cols = set(prev_sum.get("dataset_columns") or [])
+
     # Run checks
     findings: List[Finding] = []
     findings += check_columns(dd, dataset_cols)
@@ -65,6 +73,14 @@ def main(argv: List[str] | None = None) -> None:
     findings += check_branching(dd, str(data_path), dataset_cols)
     findings += check_matrix_consecutive(dd)
 
+    # Filter generic extras for new columns if this is a since-last-run scenario
+    if prev_cols:
+        new_cols = {c for c in dataset_cols if c not in prev_cols}
+        findings = [
+            f for f in findings
+            if not (f.type == "extra_column_in_data" and f.variable in new_cols)
+        ]
+
     # Convert to dicts
     findings_dicts = [f.as_dict() for f in findings]
 
@@ -77,9 +93,9 @@ def main(argv: List[str] | None = None) -> None:
         if prev_obj and isinstance(prev_obj, dict):
             prev_sum = prev_obj.get("summary") or {}
             # new columns
-            prev_cols = set(prev_sum.get("dataset_columns") or [])
+            prev_cols2 = set(prev_sum.get("dataset_columns") or [])
             for col in dataset_cols:
-                if col not in prev_cols:
+                if col not in prev_cols2:
                     findings_dicts.append(
                         {
                             "type": "extra_column_since_last_run",

@@ -69,10 +69,15 @@ def build_report_html(summary: dict, findings: List[dict]) -> str:
     errors = [f for f in findings if f.get("severity") == "error"]
     warns = [f for f in findings if f.get("severity") == "warn"]
     infos = [f for f in findings if f.get("severity") == "info"]
-    qpack = [
+    qpack_errors = [
         _query_pack_line(f)
         for f in findings
-        if f.get("severity") in {"error", "warn"}
+        if f.get("severity") == "error"
+    ]
+    qpack_warns = [
+        _query_pack_line(f)
+        for f in findings
+        if f.get("severity") == "warn"
     ]
 
     def section(title: str, items: List[str]) -> str:
@@ -103,8 +108,13 @@ def build_report_html(summary: dict, findings: List[dict]) -> str:
   {section('Nice-to-fix (warnings)', [_render_finding(f) for f in warns])}
   {section('Info', [_render_finding(f) for f in infos])}
   <h3>Query Pack</h3>
+  <h4>Errors ({len(qpack_errors)})</h4>
   <ul>
-    {''.join(_li(x) for x in qpack)}
+    {''.join(_li(x) for x in qpack_errors) if qpack_errors else '<li>None</li>'}
+  </ul>
+  <h4>Warnings ({len(qpack_warns)})</h4>
+  <ul>
+    {''.join(_li(x) for x in qpack_warns) if qpack_warns else '<li>None</li>'}
   </ul>
 </body>
 </html>

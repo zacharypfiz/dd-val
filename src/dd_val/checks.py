@@ -171,22 +171,41 @@ def _examples(values: List[str], predicate) -> List[str]:
     return out
 
 
+def _build_rename_map(dict_: Dictionary, dataset_cols: List[str]) -> Dict[str, str]:
+    ds = set(dataset_cols)
+    mapping: Dict[str, str] = {}
+    for orig, hints in _RENAME_HINTS.items():
+        if orig in dict_.by_var and orig not in ds:
+            for h in hints:
+                if h in ds:
+                    mapping[orig] = h
+                    break
+    return mapping
+
+
 def check_types(dict_: Dictionary, dataset_path: str, dataset_cols: List[str]) -> List[Finding]:
-    cols_to_check: List[str] = []
+    # Map dict variables to dataset columns (handles rename drift)
+    rename_map = _build_rename_map(dict_, dataset_cols)
+    var_to_dscol: Dict[str, str] = {}
     expected: Dict[str, str] = {}
     for f in dict_.fields:
         if f.field_type == "text" and f.validation in {"integer", "number", "date_ymd", "date_mdy", "datetime_ymd"}:
             if f.variable in dataset_cols:
-                cols_to_check.append(f.variable)
+                var_to_dscol[f.variable] = f.variable
                 expected[f.variable] = f.validation
-    vals = _collect_values(dataset_path, cols_to_check)
+            elif f.variable in rename_map:
+                dscol = rename_map[f.variable]
+                var_to_dscol[f.variable] = dscol
+                expected[f.variable] = f.validation
+    ds_cols_to_check = list(var_to_dscol.values())
+    vals = _collect_values(dataset_path, ds_cols_to_check)
 
     findings: List[Finding] = []
-    for col in cols_to_check:
-        vlist = [v for v in vals[col] if v != ""]
+    for var, dscol in var_to_dscol.items():
+        vlist = [v for v in vals.get(dscol, []) if v != ""]
         if not vlist:
             continue
-        exp = expected[col]
+        exp = expected[var]
         ok = 0
         n = len(vlist)
         obs_kind = "string"
@@ -197,9 +216,9 @@ def check_types(dict_: Dictionary, dataset_path: str, dataset_cols: List[str]) -
                 findings.append(
                     Finding(
                         type="type_mismatch",
-                        variable=col,
+                        variable=var,
                         severity="error",
-                        where={"dataset_column": col},
+                        where={"dataset_column": dscol},
                         expected="numeric",  # align with gold wording
                         observed="string",
                         examples=bad_examples,
@@ -214,9 +233,9 @@ def check_types(dict_: Dictionary, dataset_path: str, dataset_cols: List[str]) -
                 findings.append(
                     Finding(
                         type="type_mismatch",
-                        variable=col,
+                        variable=var,
                         severity="error",
-                        where={"dataset_column": col},
+                        where={"dataset_column": dscol},
                         expected="numeric",
                         observed="string",
                         examples=bad_examples,
@@ -234,9 +253,9 @@ def check_types(dict_: Dictionary, dataset_path: str, dataset_cols: List[str]) -
                 findings.append(
                     Finding(
                         type="type_mismatch",
-                        variable=col,
+                        variable=var,
                         severity="error",
-                        where={"dataset_column": col},
+                        where={"dataset_column": dscol},
                         expected="date_ymd",
                         observed=observed,
                         examples=bad_examples,
