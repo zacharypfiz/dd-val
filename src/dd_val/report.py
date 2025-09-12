@@ -33,6 +33,15 @@ def _render_finding(f: dict) -> str:
     extra = []
     if rows_affected is not None:
         extra.append(f"rows_affected={rows_affected}")
+    # Show observed_added for since-last-run domain changes
+    if isinstance(f.get("observed_added"), list) and f["observed_added"]:
+        extra.append("added=" + ", ".join(str(x) for x in f["observed_added"][:5]))
+    # Highlight primary column/location when present
+    if isinstance(where, dict):
+        if where.get("dataset_column"):
+            extra.append(f"column={where['dataset_column']}")
+        elif where.get("variable") and where["variable"] != variable:
+            extra.append(f"where={where['variable']}")
     if examples:
         extra.append(f"examples: {', '.join(examples[:5])}")
     extra_str = f" — {'; '.join(extra)}" if extra else ""

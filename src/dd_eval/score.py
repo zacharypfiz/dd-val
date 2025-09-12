@@ -4,12 +4,12 @@ import argparse
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 
-def _load_gold_and_findings(perturbed_dir: Path) -> Tuple[List[dict], List[dict]]:
-    gold_path = perturbed_dir / "gold.json"
-    findings_path = perturbed_dir / "findings.json"
+def _load_gold_and_findings(run_dir: Path) -> Tuple[List[dict], List[dict]]:
+    gold_path = run_dir / "gold.json"
+    findings_path = run_dir / "findings.json"
     gold = json.loads(gold_path.read_text(encoding="utf-8")) if gold_path.exists() else []
     findings_raw = json.loads(findings_path.read_text(encoding="utf-8")) if findings_path.exists() else []
     if isinstance(findings_raw, dict):
@@ -22,29 +22,28 @@ def _load_gold_and_findings(perturbed_dir: Path) -> Tuple[List[dict], List[dict]
 def _key(issue: dict, mode: str = "variable") -> Tuple[str, str]:
     t = issue.get("type", "")
     if mode == "strict":
-        # strict identity by type + variable + expected/observed when present
         v = issue.get("variable", "")
         e = json.dumps(issue.get("expected"), sort_keys=True) if "expected" in issue else ""
         o = json.dumps(issue.get("observed"), sort_keys=True) if "observed" in issue else ""
         return (t, f"{v}|{e}|{o}")
     else:
-        # default: type + variable
         return (t, issue.get("variable", ""))
 
 
 def score_corpus(corpus_dir: str | Path, mode: str = "variable") -> Dict[str, Dict[str, float]]:
     base = Path(corpus_dir)
-    runs = sorted([p for p in base.iterdir() if p.is_dir() and (p.name.endswith("_perturbed") or p.name.endswith("_perturbed_v2"))])
+    # Discover all run dirs that contain a gold.json (layout-agnostic)
+    runs = sorted(p.parent for p in base.rglob("gold.json"))
     tp: Dict[str, int] = defaultdict(int)
     fp: Dict[str, int] = defaultdict(int)
     fn: Dict[str, int] = defaultdict(int)
 
     for run in runs:
         gold, findings = _load_gold_and_findings(run)
-        gold_keys = {(t, k) for (t, k) in [_key(g, mode) for g in gold]}
-        pred_keys = {(t, k) for (t, k) in [_key(f, mode) for f in findings]}
+        gold_keys = {(t, k) for (t, k) in (_key(g, mode) for g in gold)}
+        pred_keys = {(t, k) for (t, k) in (_key(f, mode) for f in findings)}
 
-        types = set(t for (t, _k) in gold_keys | pred_keys)
+        types = {t for (t, _k) in gold_keys | pred_keys}
         for t in types:
             gset = {k for (tt, k) in gold_keys if tt == t}
             pset = {k for (tt, k) in pred_keys if tt == t}
@@ -52,7 +51,6 @@ def score_corpus(corpus_dir: str | Path, mode: str = "variable") -> Dict[str, Di
             fp[t] += len(pset - gset)
             fn[t] += len(gset - pset)
 
-    # Compute metrics
     metrics: Dict[str, Dict[str, float]] = {}
     for t in sorted({*tp.keys(), *fp.keys(), *fn.keys()}):
         p = tp[t] / (tp[t] + fp[t]) if (tp[t] + fp[t]) else 0.0

@@ -1,0 +1,116 @@
+[
+  {
+    "type": "missing_column_in_data",
+    "variable": "bp_dia",
+    "rows_affected": 500
+  },
+  {
+    "type": "extra_column_in_data",
+    "variable": "extra_col",
+    "rows_affected": 500
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "record_id",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 78
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "age",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 86
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "height_cm",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 82
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "weight_kg",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 75
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "bp_sys",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 80
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v1",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 113
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v2",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 92
+  },
+  {
+    "type": "domain_mismatch",
+    "variable": "satisfaction",
+    "expected": [
+      "1=Poor",
+      "2=Fair",
+      "3=Good",
+      "4=Excellent"
+    ],
+    "observed": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "9"
+    ],
+    "rows_affected": 57
+  },
+  {
+    "type": "unit_anomaly",
+    "variable": "height_cm",
+    "expected_unit": "cm",
+    "note": "subset appears inches",
+    "rows_affected": 46
+  },
+  {
+    "type": "missingness_spike",
+    "variable": "visit_date_v2",
+    "rows_affected": 400
+  },
+  {
+    "type": "rename_drift",
+    "variable": "bp_sys",
+    "observed": "sbp",
+    "rows_affected": 500
+  },
+  {
+    "type": "checkbox_expansion_mismatch",
+    "variable": "symptoms",
+    "observed_added": [
+      "symptoms___999"
+    ],
+    "rows_affected": 500
+  },
+  {
+    "type": "branching_mismatch",
+    "variable": "pregnant",
+    "condition": "[sex] = '1'",
+    "rows_affected": 58
+  },
+  {
+    "type": "matrix_nonconsecutive",
+    "variable": "adls",
+    "rows_affected": 0
+  }
+]

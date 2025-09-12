@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-"""Seed a deterministic REDCap evaluation corpus (clean + perturbed + v2).
+"""Seed a deterministic REDCap evaluation corpus (clean + perturbed v1/v2).
 
-This script is CLI-wrapped via `dd-seed` and writes CSVs and gold.json records.
+Writes a nested, versioned layout under `corpus/<project>/...`.
 """
 
 import argparse
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 from .corrupt import apply_corruptions, apply_since_last_run
 from .schema import HEADERS
@@ -27,31 +27,34 @@ def seed_corpus(
 
     for i in range(1, n_projects + 1):
         proj = f"proj{i:02d}"
+        proj_root = out / proj
         print(f"[seed] Building {proj}…")
         d_rows, x_rows = dictionary_and_data(i, rows_per_project, seed)
 
-        # Clean
-        clean_dir = out / f"{proj}_clean"
-        write_csv(clean_dir / "dictionary.csv", d_rows, HEADERS)
-        # Data headers for clean are driven by dictionary (checkbox expands)
+        # Clean v1
+        clean_v1 = proj_root / "clean" / "v1"
+        ensure_dir(clean_v1)
+        write_csv(clean_v1 / "dictionary.csv", d_rows, HEADERS)
         data_headers = list(x_rows[0].keys()) if x_rows else []
-        write_csv(clean_dir / "dataset.csv", x_rows, data_headers)
+        write_csv(clean_v1 / "dataset.csv", x_rows, data_headers)
 
         # Perturbed v1
         p_rows, p_data, gold1 = apply_corruptions(d_rows, x_rows, seed + i)
-        perturbed_dir = out / f"{proj}_perturbed"
-        write_csv(perturbed_dir / "dictionary.csv", p_rows, HEADERS)
+        pert_v1 = proj_root / "perturbed" / "v1"
+        ensure_dir(pert_v1)
         p_headers = list(p_data[0].keys()) if p_data else []
-        write_csv(perturbed_dir / "dataset.csv", p_data, p_headers)
-        write_json(perturbed_dir / "gold.json", gold1)
+        write_csv(pert_v1 / "dictionary.csv", p_rows, HEADERS)
+        write_csv(pert_v1 / "dataset.csv", p_data, p_headers)
+        write_json(pert_v1 / "gold.json", gold1)
 
         # Perturbed v2 (since-last-run)
         p2_rows, p2_data, gold2_extra = apply_since_last_run(p_rows, p_data, seed + i)
-        perturbed_v2_dir = out / f"{proj}_perturbed_v2"
-        write_csv(perturbed_v2_dir / "dictionary.csv", p2_rows, HEADERS)
+        pert_v2 = proj_root / "perturbed" / "v2"
+        ensure_dir(pert_v2)
         p2_headers = list(p2_data[0].keys()) if p2_data else []
-        write_csv(perturbed_v2_dir / "dataset.csv", p2_data, p2_headers)
-        write_json(perturbed_v2_dir / "gold.json", gold1 + gold2_extra)
+        write_csv(pert_v2 / "dictionary.csv", p2_rows, HEADERS)
+        write_csv(pert_v2 / "dataset.csv", p2_data, p2_headers)
+        write_json(pert_v2 / "gold.json", gold1 + gold2_extra)
 
 
 def build_argparser() -> argparse.ArgumentParser:

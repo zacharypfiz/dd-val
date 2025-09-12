@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import re
 from typing import List
 
 from .parse import load_dictionary, load_dataset_headers, iter_dataset_rows
@@ -23,6 +24,72 @@ from .checks import (
 from .report import build_report_html
 
 
+def _infer_prev_findings(cur_dir: Path) -> Path | None:
+    """Infer previous findings.json path based on folder naming.
+
+    Supported patterns:
+    - flat:   name like "<base>_vN" -> previous "<base>_v(N-1)"
+    - flat:   name like "<base>_perturbed_vN" -> previous "<base>_perturbed" (when N==2) or "<base>_perturbed_v(N-1)"
+    - nested: name like "vN" under a project folder -> previous sibling "v(N-1)"
+    Returns path to previous findings.json if it exists, else None.
+    """
+    name = cur_dir.name
+
+    # Case: perturbed_vN special-casing v2 -> perturbed
+    m = re.match(r"^(?P<base>.+_perturbed)_v(?P<ver>\d+)$", name)
+    if m:
+        base = m.group("base")
+        ver = int(m.group("ver"))
+        if ver == 2:
+            cand = cur_dir.parent / base / "findings.json"
+        else:
+            cand = cur_dir.parent / f"{base}_v{ver-1}" / "findings.json"
+        return cand if cand.exists() else None
+
+    # Case: generic _vN suffix
+    m = re.match(r"^(?P<base>.+)_v(?P<ver>\d+)$", name)
+    if m:
+        base = m.group("base")
+        ver = int(m.group("ver"))
+        if ver > 1:
+            cand = cur_dir.parent / f"{base}_v{ver-1}" / "findings.json"
+            return cand if cand.exists() else None
+
+    # Case: nested vN folder
+    m = re.match(r"^v(?P<ver>\d+)$", name)
+    if m:
+        ver = int(m.group("ver"))
+        if ver > 1:
+            cand = cur_dir.parent / f"v{ver-1}" / "findings.json"
+            return cand if cand.exists() else None
+
+    return None
+
+
+def _infer_prev_from_pointer(cur_dir: Path) -> Path | None:
+    """If a `.prev` file exists in `cur_dir`, interpret it as a pointer to
+    the previous findings. Content may be a file path to findings.json or a
+    directory path containing findings.json. Relative paths are resolved
+    against `cur_dir`.
+    """
+    ptr = cur_dir / ".prev"
+    if not ptr.exists():
+        return None
+    try:
+        raw = ptr.read_text(encoding="utf-8").strip()
+    except Exception:
+        return None
+    if not raw:
+        return None
+    target = Path(raw)
+    if not target.is_absolute():
+        target = (cur_dir / target).resolve()
+    # If a directory, assume findings.json inside
+    if target.is_dir():
+        target = target / "findings.json"
+    return target if target.exists() else None
+
+
 def _read_prev(prev_path: Path) -> dict | None:
     try:
         return json.loads(prev_path.read_text(encoding="utf-8"))
@@ -37,6 +104,7 @@ def main(argv: List[str] | None = None) -> None:
     ap.add_argument("--out", dest="findings_path", required=True, help="Output findings.json path")
     ap.add_argument("--html", dest="html_path", required=True, help="Output report.html path")
     ap.add_argument("--prev", dest="prev_findings", default=None, help="Previous findings.json for since-last-run diffs")
+    ap.add_argument("--no-prev", action="store_true", help="Disable auto-detecting previous findings by folder naming (e.g., _vN)")
     args = ap.parse_args(argv)
 
     dict_path = Path(args.dict_path)
@@ -44,6 +112,11 @@ def main(argv: List[str] | None = None) -> None:
     findings_path = Path(args.findings_path)
     html_path = Path(args.html_path)
     prev = Path(args.prev_findings) if args.prev_findings else None
+
+    # If not explicitly provided, try .prev pointer then folder-naming inference
+    if prev is None and not args.no_prev:
+        cur_dir = findings_path.parent
+        prev = _infer_prev_from_pointer(cur_dir) or _infer_prev_findings(cur_dir)
 
     dd = load_dictionary(dict_path)
     dataset_cols = load_dataset_headers(data_path)
