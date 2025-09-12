@@ -54,6 +54,8 @@ TYPE_SUCCESS_INT = 0.95
 TYPE_SUCCESS_NUM = 0.95
 TYPE_SUCCESS_DATE = 0.95
 MISSINGNESS_SPIKE_THRESHOLD = 0.70
+REQUIRED_MISSING_RATE_THRESHOLD = 0.05
+REDCAP_META_COLUMNS = {"redcap_event_name", "redcap_repeat_instrument", "redcap_repeat_instance"}
 
 
 def check_columns(dict_: Dictionary, dataset_cols: List[str]) -> List[Finding]:
@@ -104,6 +106,8 @@ def check_columns(dict_: Dictionary, dataset_cols: List[str]) -> List[Finding]:
         if orig in dict_.by_var:
             for h in hints:
                 allowed.add(h)
+    # Allow standard REDCap longitudinal/repeating meta columns
+    allowed.update(REDCAP_META_COLUMNS)
     # Derive: treat checkbox-style columns for known checkbox vars as non-extra; handled by checkbox check
     checkbox_vars = {f.variable for f in dict_.fields if f.field_type == "checkbox"}
     for col in dataset_cols:
@@ -120,6 +124,42 @@ def check_columns(dict_: Dictionary, dataset_cols: List[str]) -> List[Finding]:
                 )
             )
     return findings
+
+
+def check_longitudinal_context(dataset_path: str, dataset_cols: List[str]) -> List[Finding]:
+    present = sorted([c for c in REDCAP_META_COLUMNS if c in set(dataset_cols)])
+    if not present:
+        return []
+    cols_to_collect = [c for c in ["redcap_event_name", "redcap_repeat_instrument", "redcap_repeat_instance"] if c in present]
+    vals = _collect_values(dataset_path, cols_to_collect)
+    # Compute event stats
+    events = vals.get("redcap_event_name", []) if "redcap_event_name" in vals else []
+    ev_counts = Counter([e for e in events if e != ""]) if events else Counter()
+    top_events = [
+        {"event": k, "n": v} for k, v in ev_counts.most_common(3)
+    ] if ev_counts else []
+    total = len(events) if events else 0
+    rep_inst = vals.get("redcap_repeat_instrument", []) if "redcap_repeat_instrument" in vals else []
+    rep_idx = vals.get("redcap_repeat_instance", []) if "redcap_repeat_instance" in vals else []
+    repeat_rows = 0
+    if rep_inst or rep_idx:
+        # count rows where either repeat field is non-empty
+        repeat_rows = sum(1 for i in range(max(len(rep_inst), len(rep_idx))) if ((rep_inst[i] if i < len(rep_inst) else "") != "" or (rep_idx[i] if i < len(rep_idx) else "") != ""))
+    obs = {
+        "distinct_events": len(ev_counts),
+        "top_events": top_events,
+        "repeat_rows": repeat_rows,
+        "repeat_rate": round((repeat_rows / total), 3) if total else 0.0,
+    }
+    return [
+        Finding(
+            type="longitudinal_context_detected",
+            variable="dataset",
+            severity="info",
+            where={"columns": ",".join(present)},
+            observed=obs,
+        )
+    ]
 
 
 def check_checkbox_mismatch(dict_: Dictionary, dataset_cols: List[str]) -> List[Finding]:
@@ -169,6 +209,63 @@ def _examples(values: List[str], predicate) -> List[str]:
         if len(out) >= 5:
             break
     return out
+
+
+def detect_export_mode_labels(
+    dict_: Dictionary, dataset_path: str, dataset_cols: List[str]
+) -> Tuple[bool, List[Finding]]:
+    """Detect if dataset likely contains labels instead of codes for categorical fields.
+
+    Heuristic across radio/dropdown/yesno/truefalse fields:
+    - Compute, across fields, how often values match allowed codes vs labels.
+    - If label matches dominate and occur in multiple fields, flag and suggest re-export.
+    Returns (labels_detected, findings).
+    """
+    cat_fields = [
+        f for f in dict_.fields
+        if f.field_type in {"radio", "dropdown", "yesno", "truefalse"} and f.variable in dataset_cols
+    ]
+    if not cat_fields:
+        return False, []
+    vals = _collect_values(dataset_path, [f.variable for f in cat_fields])
+    total_code = total_label = total_nonempty = 0
+    label_majority_fields = 0
+    fields_checked = 0
+    for f in cat_fields:
+        vlist = [v for v in vals.get(f.variable, []) if v != ""]
+        if not vlist:
+            continue
+        fields_checked += 1
+        codes = {c for c, _ in f.choices}
+        labels = {lbl for _, lbl in f.choices}
+        n_code = sum(1 for v in vlist if v in codes)
+        n_label = sum(1 for v in vlist if v in labels)
+        total_code += n_code
+        total_label += n_label
+        total_nonempty += len(vlist)
+        if len(vlist) > 0 and n_label / len(vlist) >= 0.8 and n_label > n_code:
+            label_majority_fields += 1
+
+    if fields_checked == 0:
+        return False, []
+    # Trigger if labels dominate globally and at least two fields show label-majority
+    label_rate = (total_label / max(1, total_nonempty))
+    labels_detected = (label_rate >= 0.6 and label_majority_fields >= 2 and total_label >= 20)
+    if not labels_detected:
+        return False, []
+    finding = Finding(
+        type="export_mode_labels_detected",
+        variable="dataset",
+        severity="info",
+        where={"mode": "labels"},
+        observed={
+            "fields_checked": fields_checked,
+            "label_majority_fields": label_majority_fields,
+            "label_rate": round(label_rate, 3),
+        },
+        suggestion="Re-export with 'raw' (codes) or map labels to codes.",
+    )
+    return True, [finding]
 
 
 def _build_rename_map(dict_: Dictionary, dataset_cols: List[str]) -> Dict[str, str]:
@@ -289,6 +386,85 @@ def check_domains(dict_: Dictionary, dataset_path: str, dataset_cols: List[str])
                     observed=unexpected,
                     examples=unexpected[:5],
                     rows_affected=sum(1 for v in vals[col] if v in unexpected),
+                )
+            )
+    return findings
+
+
+def check_primary_key(dict_: Dictionary, dataset_path: str, dataset_cols: List[str]) -> List[Finding]:
+    """Ensure primary key column exists and is unique.
+
+    Preference order: 'record_id' if present; else first variable in dictionary.
+    """
+    findings: List[Finding] = []
+    pk = "record_id" if "record_id" in dataset_cols else (dict_.fields[0].variable if dict_.fields else None)
+    if not pk:
+        return findings
+    if pk not in dataset_cols:
+        findings.append(
+            Finding(
+                type="missing_primary_key_column",
+                variable=pk,
+                severity="error",
+                where={"dataset_column": pk},
+            )
+        )
+        return findings
+    # Check duplicates (ignore blanks)
+    seen: Set[str] = set()
+    dups: Counter[str] = Counter()
+    total = 0
+    blanks = 0
+    for row in iter_dataset_rows(dataset_path):
+        v = (row.get(pk, "") or "").strip()
+        total += 1
+        if v == "":
+            blanks += 1
+            continue
+        if v in seen:
+            dups[v] += 1
+        else:
+            seen.add(v)
+    if dups:
+        examples = [k for k, _ in dups.most_common(5)]
+        rows_affected = sum(dups.values())
+        findings.append(
+            Finding(
+                type="duplicate_primary_key_values",
+                variable=pk,
+                severity="error",
+                where={"dataset_column": pk},
+                examples=examples,
+                rows_affected=rows_affected,
+            )
+        )
+    return findings
+
+
+def check_required_fields(
+    dict_: Dictionary, dataset_path: str, dataset_cols: List[str], threshold: float = REQUIRED_MISSING_RATE_THRESHOLD
+) -> List[Finding]:
+    """For dictionary-required fields, flag high missing rates in the dataset."""
+    req_vars = [f.variable for f in dict_.fields if getattr(f, "required", False) and f.variable in dataset_cols]
+    if not req_vars:
+        return []
+    vals = _collect_values(dataset_path, req_vars)
+    findings: List[Finding] = []
+    for var in req_vars:
+        col_vals = vals.get(var, [])
+        if not col_vals:
+            continue
+        total = len(col_vals)
+        missing = sum(1 for v in col_vals if (v or "").strip() == "")
+        if total >= 20 and missing / total >= threshold:
+            findings.append(
+                Finding(
+                    type="required_field_missing_rate_high",
+                    variable=var,
+                    severity="error",
+                    where={"dataset_column": var},
+                    observed={"missing_rate": round(missing / total, 3)},
+                    rows_affected=missing,
                 )
             )
     return findings
@@ -432,12 +608,24 @@ def build_summary(
     dict_: Dictionary,
     dataset_cols: List[str],
     n_rows: int,
+    primary_key: str | None = None,
+    pk_blanks: int | None = None,
+    pk_duplicates: int | None = None,
 ) -> dict:
-    return {
+    summary = {
         "rows": n_rows,
         "cols": len(dataset_cols),
         "dict_fields": len(dict_.fields),
         "dataset_columns": dataset_cols,
         "dict_field_names": [f.variable for f in dict_.fields],
         "dict_choices": {v: [f"{c}={lbl}" for c, lbl in dict_.choices.get(v, [])] for v in [f.variable for f in dict_.fields]},
+        "dict_validations": {f.variable: (f.validation or "") for f in dict_.fields},
+        "dict_required_flags": {f.variable: bool(getattr(f, "required", False)) for f in dict_.fields},
     }
+    if primary_key is not None:
+        summary["primary_key"] = primary_key
+    if pk_blanks is not None:
+        summary["primary_key_blanks"] = pk_blanks
+    if pk_duplicates is not None:
+        summary["primary_key_duplicates"] = pk_duplicates
+    return summary

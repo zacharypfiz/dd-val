@@ -12,15 +12,18 @@ from .parse import load_dictionary, load_dataset_headers, iter_dataset_rows
 from .checks import (
     Finding,
     build_summary,
+    check_primary_key,
     check_branching,
     check_checkbox_mismatch,
     check_columns,
     check_domains,
+    check_longitudinal_context,
     check_matrix_consecutive,
     check_missingness_spike,
     check_rename_drift,
     check_types,
 )
+from .checks import detect_export_mode_labels, check_required_fields
 from .report import build_report_html
 
 
@@ -120,10 +123,26 @@ def main(argv: List[str] | None = None) -> None:
 
     dd = load_dictionary(dict_path)
     dataset_cols = load_dataset_headers(data_path)
-    # Count rows cheaply
+    # Count rows and compute primary key stats in a single pass
     n_rows = 0
-    for _ in iter_dataset_rows(data_path):
+    pk_var: str | None = None
+    if "record_id" in dataset_cols:
+        pk_var = "record_id"
+    elif dd.fields:
+        pk_var = dd.fields[0].variable
+    pk_blanks = 0
+    pk_duplicates = 0
+    seen_pk = set()
+    for row in iter_dataset_rows(data_path):
         n_rows += 1
+        if pk_var:
+            v = (row.get(pk_var, "") or "").strip()
+            if v == "":
+                pk_blanks += 1
+            elif v in seen_pk:
+                pk_duplicates += 1
+            else:
+                seen_pk.add(v)
 
     # If previous findings are provided, pre-compute previous dataset columns
     prev_cols: set[str] = set()
@@ -136,13 +155,34 @@ def main(argv: List[str] | None = None) -> None:
     # Run checks
     findings: List[Finding] = []
     findings += check_columns(dd, dataset_cols)
+    findings += check_longitudinal_context(str(data_path), dataset_cols)
     findings += check_rename_drift(dd, dataset_cols)
     findings += check_checkbox_mismatch(dd, dataset_cols)
     findings += check_types(dd, str(data_path), dataset_cols)
-    findings += check_domains(dd, str(data_path), dataset_cols)
+    # Detect label-export mode; if detected, suppress domain_mismatch noise
+    labels_detected, label_findings = detect_export_mode_labels(dd, str(data_path), dataset_cols)
+    findings += label_findings
+    if not labels_detected:
+        findings += check_domains(dd, str(data_path), dataset_cols)
+    else:
+        # Optionally compute how many domain mismatches would have appeared (suppressed count)
+        try:
+            suppressed = check_domains(dd, str(data_path), dataset_cols)
+            if label_findings:
+                lf = label_findings[0]
+                # augment observed
+                obs = dict(lf.observed or {})
+                obs["suppressed_domain_findings"] = len(suppressed)
+                obs["suppressed_rows_affected"] = sum(int(f.rows_affected or 0) for f in suppressed)
+                obs["example_variables"] = sorted({f.variable for f in suppressed})[:5]
+                lf.observed = obs
+        except Exception:
+            pass
     from .checks import check_unit_anomaly
     findings += check_unit_anomaly(dd, str(data_path), dataset_cols)
     findings += check_missingness_spike(str(data_path), dataset_cols)
+    findings += check_primary_key(dd, str(data_path), dataset_cols)
+    findings += check_required_fields(dd, str(data_path), dataset_cols)
     findings += check_branching(dd, str(data_path), dataset_cols)
     findings += check_matrix_consecutive(dd)
 
@@ -158,7 +198,7 @@ def main(argv: List[str] | None = None) -> None:
     findings_dicts = [f.as_dict() for f in findings]
 
     # Build summary (and embed current shapes to enable since-last-run in future)
-    summary = build_summary(dd, dataset_cols, n_rows)
+    summary = build_summary(dd, dataset_cols, n_rows, pk_var, pk_blanks, pk_duplicates)
 
     # Since last run diffs (if prev provided and has summary)
     if prev and prev.exists():
@@ -178,6 +218,18 @@ def main(argv: List[str] | None = None) -> None:
                             "rows_affected": n_rows,
                         }
                     )
+            # dropped columns
+            for col in prev_cols2:
+                if col not in set(dataset_cols):
+                    findings_dicts.append(
+                        {
+                            "type": "missing_column_since_last_run",
+                            "variable": col,
+                            "severity": "info",
+                            "where": {"dataset_column": col},
+                            "rows_affected": int(prev_sum.get("rows") or 0),
+                        }
+                    )
             # dictionary choices changes
             prev_choices = prev_sum.get("dict_choices") or {}
             cur_choices = summary.get("dict_choices") or {}
@@ -193,6 +245,38 @@ def main(argv: List[str] | None = None) -> None:
                             "severity": "info",
                             "where": {"variable": var},
                             "observed_added": added,
+                            "rows_affected": 0,
+                        }
+                    )
+            # validation changes since last run
+            prev_valid = prev_sum.get("dict_validations") or {}
+            cur_valid = summary.get("dict_validations") or {}
+            for var in sorted(set(prev_valid.keys()) | set(cur_valid.keys())):
+                a, b = prev_valid.get(var) or "", cur_valid.get(var) or ""
+                if a != b:
+                    findings_dicts.append(
+                        {
+                            "type": "validation_changed_since_last_run",
+                            "variable": var,
+                            "severity": "info",
+                            "where": {"variable": var},
+                            "observed": {"from": a, "to": b},
+                            "rows_affected": 0,
+                        }
+                    )
+            # required flag changes since last run
+            prev_req = prev_sum.get("dict_required_flags") or {}
+            cur_req = summary.get("dict_required_flags") or {}
+            for var in sorted(set(prev_req.keys()) | set(cur_req.keys())):
+                a, b = bool(prev_req.get(var)), bool(cur_req.get(var))
+                if a != b:
+                    findings_dicts.append(
+                        {
+                            "type": "required_flag_changed",
+                            "variable": var,
+                            "severity": "info",
+                            "where": {"variable": var},
+                            "observed": {"from": a, "to": b},
                             "rows_affected": 0,
                         }
                     )

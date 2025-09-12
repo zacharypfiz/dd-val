@@ -130,7 +130,12 @@ corpus/
 ## Info section details
 - extra_column_since_last_run (info): Lists the new dataset column (as `column=...`) and `rows_affected` (all rows for a new column).
 - domain_mismatch_since_last_run (info): Lists newly added allowed codes (as `added=...`).
+- missing_column_since_last_run (info): Column present in the previous run is now absent from the dataset.
+- validation_changed_since_last_run (info): The dictionary validation changed for a variable (e.g., `integer` to `number`).
+- required_flag_changed (info): The dictionary required flag changed for a variable.
 - These appear under the “Info” section in the HTML report and never cause failures.
+ - export_mode_labels_detected (info): Dataset appears to contain labels instead of codes for categorical fields. Domain mismatch noise is suppressed; re-export in raw (codes) is recommended.
+ - longitudinal_context_detected (info): Standard REDCap longitudinal/repeating columns detected; these are recognized and not treated as extra columns.
 
 ## Validator checks
 
@@ -139,6 +144,9 @@ Errors (must‑fix)
 - checkbox_expansion_mismatch: Checkbox columns in dataset do not match Column F choices.
 - type_mismatch: Values fail declared validation (integer, number, date_ymd, date_mdy, datetime_ymd). Includes examples and rows_affected.
 - domain_mismatch: Observed categorical codes not in allowed choices (Column F). Shows expected pairs like `0=Male`.
+- missing_primary_key_column: Primary key column missing (uses `record_id` if present, else first dictionary variable).
+- duplicate_primary_key_values: Duplicate values in the primary key column.
+- required_field_missing_rate_high: A dictionary‑required field has a high missing rate.
 
 Warnings (nice‑to‑fix)
 - extra_column_in_data: Column exists in dataset but not in dictionary (rename hints and checkbox expansions are excluded).
@@ -162,14 +170,42 @@ Each finding also renders a single, actionable line in the “Query Pack” sect
 - type_mismatch: “Validated as <type> but some values do not parse (e.g., …). Change validation or recode?”
 - unit_anomaly: “Numeric values suggest alternate unit for a subset. Confirm units or recode.”
 - checkbox_expansion_mismatch: “Checkbox columns do not match choices. Align dataset columns with Column F codes.”
+- missing_primary_key_column: “Primary key column missing. Add this column to the export.”
+- duplicate_primary_key_values: “Duplicate primary key values exist. Deduplicate or fix export.”
+- required_field_missing_rate_high: “Required field has high missing rate. Review branching or enforce entry.”
+- export_mode_labels_detected: “Dataset appears label‑exported. Re‑export in raw (codes) or map labels.”
+- rename_drift: “Appears renamed in dataset to '<new>'. Align names or update dictionary.”
 - matrix_nonconsecutive: “Matrix fields are not consecutive in dictionary. Reorder so they appear together.”
 - branching_mismatch: “Values appear outside branching logic. Confirm logic or data.”
 - Other types render a generic “please review” line.
 
+Ordering: Query Pack entries are grouped by variable (sorted by variable, then type) to streamline triage.
+
 ## Info section (since‑last‑run)
 
 When a previous run is linked (auto, `.prev`, or `--prev`), `dd-val` emits informational findings to highlight changes since the last run:
-- extra_column_since_last_run: info — A new dataset column compared to the previous run. Includes rows_affected and where.dataset_column.
-- domain_mismatch_since_last_run: info — New allowed choice codes added in the dictionary since the previous run. Lists observed_added.
+- extra_column_since_last_run: New dataset column compared to the previous run. Includes rows_affected and where.dataset_column.
+- missing_column_since_last_run: Column present previously is now absent from the dataset.
+- domain_mismatch_since_last_run: Newly added allowed choice codes in the dictionary. Lists observed_added.
+- validation_changed_since_last_run: Dictionary validation changed for a variable (e.g., integer → number).
+- required_flag_changed: Dictionary required flag changed for a variable.
 
 Purpose: These info items are not errors; they surface what changed to aid review and release notes. They never cause failures and appear in the “Info” section of the HTML report.
+
+## Summary enhancements
+
+The report summary shows primary key details:
+- Primary key: shows the chosen primary key (prefers `record_id`, else the first dictionary variable)
+- When applicable, also shows `duplicates` and `blanks` counts for quick triage
+
+When label-export mode is detected, the report includes a note indicating that domain mismatch errors were suppressed to avoid false positives.
+
+## Longitudinal/repeating awareness
+
+`dd-val` recognizes standard REDCap columns `redcap_event_name`, `redcap_repeat_instrument`, and `redcap_repeat_instance`:
+- They are not flagged as extra columns.
+- If present, an info finding `longitudinal_context_detected` is emitted.
+
+## Raw vs. Label exports
+
+If the dataset appears to contain labels instead of codes for categorical fields, `dd-val` emits `export_mode_labels_detected` (info) and suppresses otherwise noisy `domain_mismatch` errors. Re‑export datasets in raw (codes) mode or map labels to codes for accurate validation.

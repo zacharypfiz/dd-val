@@ -15,8 +15,9 @@ if [[ -z "${VALIDATOR_CMD:-}" ]]; then
 fi
 
 echo "Discovering project versions (by presence of dictionary.csv + dataset.csv)…"
-find "$CORPUS_DIR" -type f -name 'dictionary.csv' -print0 |
-while IFS= read -r -d '' dictfile; do
+# Ensure deterministic order so v1 runs before v2 for since-last-run linking
+find "$CORPUS_DIR" -type f -name 'dictionary.csv' | sort |
+while IFS= read -r dictfile; do
   proj_dir=$(dirname "$dictfile")
   dict="$proj_dir/dictionary.csv"
   data="$proj_dir/dataset.csv"

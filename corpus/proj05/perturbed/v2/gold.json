@@ -66,34 +66,16 @@
     "rows_affected": 106
   },
   {
-    "type": "domain_mismatch",
-    "variable": "satisfaction",
-    "expected": [
-      "1=Poor",
-      "2=Fair",
-      "3=Good",
-      "4=Excellent"
-    ],
-    "observed": [
-      "1",
-      "2",
-      "3",
-      "4",
-      "9"
-    ],
-    "rows_affected": 53
-  },
-  {
     "type": "unit_anomaly",
     "variable": "height_cm",
     "expected_unit": "cm",
     "note": "subset appears inches",
-    "rows_affected": 48
+    "rows_affected": 57
   },
   {
     "type": "missingness_spike",
     "variable": "visit_date_v2",
-    "rows_affected": 401
+    "rows_affected": 396
   },
   {
     "type": "rename_drift",
@@ -113,12 +95,32 @@
     "type": "branching_mismatch",
     "variable": "pregnant",
     "condition": "[sex] = '1'",
-    "rows_affected": 52
+    "rows_affected": 44
   },
   {
     "type": "matrix_nonconsecutive",
     "variable": "adls",
     "rows_affected": 0
+  },
+  {
+    "type": "duplicate_primary_key_values",
+    "variable": "record_id",
+    "rows_affected": 41
+  },
+  {
+    "type": "required_field_missing_rate_high",
+    "variable": "age",
+    "rows_affected": 131
+  },
+  {
+    "type": "export_mode_labels_detected",
+    "variable": "dataset",
+    "rows_affected": 500
+  },
+  {
+    "type": "longitudinal_context_detected",
+    "variable": "dataset",
+    "rows_affected": 500
   },
   {
     "type": "domain_mismatch_since_last_run",

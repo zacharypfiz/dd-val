@@ -25,6 +25,7 @@ class DictField:
     vmin: Optional[str]
     vmax: Optional[str]
     identifier: bool
+    required: bool
     branching_logic: str
     matrix_group: str
     raw: Dict[str, str]
@@ -86,6 +87,7 @@ def load_dictionary(path: str | Path) -> Dictionary:
         vmin = (r.get("text_validation_min") or None)
         vmax = (r.get("text_validation_max") or None)
         identifier = (r.get("identifier", "") or "").strip().lower() == "y"
+        required = (r.get("required_field", "") or "").strip().lower() == "y"
         branching = (r.get("branching_logic", "") or "").strip()
         matrix = (r.get("matrix_group_name", "") or "").strip()
         field = DictField(
@@ -98,6 +100,7 @@ def load_dictionary(path: str | Path) -> Dictionary:
             vmin=vmin,
             vmax=vmax,
             identifier=identifier,
+            required=required,
             branching_logic=branching,
             matrix_group=matrix,
             raw=r,

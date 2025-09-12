@@ -123,3 +123,7 @@ findings.json
 # IDE
 .vscode/
 .idea/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
