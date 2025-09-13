@@ -1,0 +1,431 @@
+{
+  "summary": {
+    "rows": 500,
+    "cols": 23,
+    "dict_fields": 18,
+    "dataset_columns": [
+      "sex",
+      "age",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "symptoms___1",
+      "symptoms___2",
+      "symptoms___3",
+      "satisfaction",
+      "visit_date_v1",
+      "visit_date_v2",
+      "adls_wash",
+      "adls_dress",
+      "adls_eat",
+      "notes",
+      "pain_severity",
+      "bp_dia",
+      "extra_col",
+      "sbp",
+      "symptoms___999",
+      "redcap_event_name",
+      "redcap_repeat_instrument",
+      "redcap_repeat_instance"
+    ],
+    "dict_field_names": [
+      "record_id",
+      "sex",
+      "pregnant",
+      "age",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "symptoms",
+      "satisfaction",
+      "visit_date_v1",
+      "visit_date_v2",
+      "adls_wash",
+      "adls_dress",
+      "notes",
+      "pain_severity",
+      "bp_sys",
+      "bp_dia",
+      "adls_eat"
+    ],
+    "dict_choices": {
+      "record_id": [],
+      "sex": [
+        "0=Male",
+        "1=Female"
+      ],
+      "pregnant": [
+        "0=No",
+        "1=Yes"
+      ],
+      "age": [],
+      "height_cm": [],
+      "weight_kg": [],
+      "bmi": [],
+      "symptoms": [
+        "1=Cough",
+        "2=Fever",
+        "3=Fatigue"
+      ],
+      "satisfaction": [
+        "1=Poor",
+        "2=Fair",
+        "3=Good",
+        "4=Excellent"
+      ],
+      "visit_date_v1": [],
+      "visit_date_v2": [],
+      "adls_wash": [
+        "0=No",
+        "1=Yes"
+      ],
+      "adls_dress": [
+        "0=No",
+        "1=Yes"
+      ],
+      "notes": [],
+      "pain_severity": [],
+      "bp_sys": [],
+      "bp_dia": [],
+      "adls_eat": [
+        "0=No",
+        "1=Yes"
+      ]
+    },
+    "dict_validations": {
+      "record_id": "integer",
+      "sex": "",
+      "pregnant": "",
+      "age": "integer",
+      "height_cm": "number",
+      "weight_kg": "number",
+      "bmi": "",
+      "symptoms": "",
+      "satisfaction": "",
+      "visit_date_v1": "date_ymd",
+      "visit_date_v2": "date_ymd",
+      "adls_wash": "",
+      "adls_dress": "",
+      "notes": "",
+      "pain_severity": "y",
+      "bp_sys": "integer",
+      "bp_dia": "integer",
+      "adls_eat": ""
+    },
+    "dict_required_flags": {
+      "record_id": true,
+      "sex": true,
+      "pregnant": false,
+      "age": true,
+      "height_cm": false,
+      "weight_kg": false,
+      "bmi": false,
+      "symptoms": false,
+      "satisfaction": false,
+      "visit_date_v1": false,
+      "visit_date_v2": false,
+      "adls_wash": false,
+      "adls_dress": false,
+      "notes": false,
+      "pain_severity": false,
+      "bp_sys": false,
+      "bp_dia": false,
+      "adls_eat": false
+    },
+    "primary_key": "record_id",
+    "primary_key_blanks": 500,
+    "primary_key_duplicates": 0
+  },
+  "findings": [
+    {
+      "type": "missing_column_in_data",
+      "variable": "record_id",
+      "severity": "error",
+      "where": {
+        "dataset_column": "record_id"
+      }
+    },
+    {
+      "type": "missing_column_in_data",
+      "variable": "pregnant",
+      "severity": "error",
+      "where": {
+        "dataset_column": "pregnant"
+      }
+    },
+    {
+      "type": "extra_column_in_data",
+      "variable": "extra_col",
+      "severity": "warn",
+      "where": {
+        "dataset_column": "extra_col"
+      }
+    },
+    {
+      "type": "longitudinal_context_detected",
+      "variable": "dataset",
+      "severity": "info",
+      "where": {
+        "columns": "redcap_event_name,redcap_repeat_instance,redcap_repeat_instrument"
+      },
+      "observed": {
+        "distinct_events": 2,
+        "top_events": [
+          {
+            "event": "baseline_arm_1",
+            "n": 255
+          },
+          {
+            "event": "followup_arm_1",
+            "n": 245
+          }
+        ],
+        "repeat_rows": 94,
+        "repeat_rate": 0.188
+      }
+    },
+    {
+      "type": "rename_drift",
+      "variable": "bp_sys",
+      "severity": "warn",
+      "where": {
+        "dataset_column": "sbp"
+      },
+      "observed": {
+        "new": "sbp"
+      }
+    },
+    {
+      "type": "checkbox_expansion_mismatch",
+      "variable": "symptoms",
+      "severity": "error",
+      "where": {
+        "dataset_column": "symptoms"
+      },
+      "observed": {
+        "observed_added": [
+          "symptoms___999"
+        ]
+      }
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "age",
+      "severity": "error",
+      "where": {
+        "dataset_column": "age"
+      },
+      "expected": "numeric",
+      "observed": "string",
+      "examples": [
+        "63x",
+        "57x",
+        "56x",
+        "23x",
+        "43x"
+      ],
+      "rows_affected": 50
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "height_cm",
+      "severity": "error",
+      "where": {
+        "dataset_column": "height_cm"
+      },
+      "expected": "numeric",
+      "observed": "string",
+      "examples": [
+        "152.4x",
+        "182.0x",
+        "168.7x",
+        "189.1x",
+        "163.2x"
+      ],
+      "rows_affected": 65
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "weight_kg",
+      "severity": "error",
+      "where": {
+        "dataset_column": "weight_kg"
+      },
+      "expected": "numeric",
+      "observed": "string",
+      "examples": [
+        "74.9x",
+        "87.6x",
+        "99.9x",
+        "76.9x",
+        "77.2x"
+      ],
+      "rows_affected": 63
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "visit_date_v1",
+      "severity": "error",
+      "where": {
+        "dataset_column": "visit_date_v1"
+      },
+      "expected": "date_ymd",
+      "observed": "date_mdy",
+      "examples": [
+        "05/05/2024",
+        "04/28/2024",
+        "03/07/2024",
+        "10/07/2024",
+        "12/01/2024"
+      ],
+      "rows_affected": 102
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "visit_date_v2",
+      "severity": "error",
+      "where": {
+        "dataset_column": "visit_date_v2"
+      },
+      "expected": "date_ymd",
+      "observed": "date_mdy",
+      "examples": [
+        "06/02/2024",
+        "07/06/2024",
+        "12/08/2024",
+        "12/27/2024",
+        "09/27/2024"
+      ],
+      "rows_affected": 22
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "bp_sys",
+      "severity": "error",
+      "where": {
+        "dataset_column": "sbp"
+      },
+      "expected": "numeric",
+      "observed": "string",
+      "examples": [
+        "92x",
+        "120x",
+        "134x",
+        "170x",
+        "134x"
+      ],
+      "rows_affected": 76
+    },
+    {
+      "type": "type_mismatch",
+      "variable": "bp_dia",
+      "severity": "error",
+      "where": {
+        "dataset_column": "bp_dia"
+      },
+      "expected": "numeric",
+      "observed": "string",
+      "examples": [
+        "67x",
+        "65x",
+        "80x",
+        "58x",
+        "60x"
+      ],
+      "rows_affected": 78
+    },
+    {
+      "type": "export_mode_labels_detected",
+      "variable": "dataset",
+      "severity": "info",
+      "where": {
+        "mode": "labels"
+      },
+      "observed": {
+        "fields_checked": 5,
+        "label_majority_fields": 5,
+        "label_rate": 1.0,
+        "suppressed_domain_findings": 5,
+        "suppressed_rows_affected": 2410,
+        "example_variables": [
+          "adls_dress",
+          "adls_eat",
+          "adls_wash",
+          "satisfaction",
+          "sex"
+        ]
+      },
+      "suggestion": "Re-export with 'raw' (codes) or map labels to codes."
+    },
+    {
+      "type": "unit_anomaly",
+      "variable": "height_cm",
+      "severity": "warn",
+      "where": {
+        "dataset_column": "height_cm"
+      },
+      "expected": {
+        "unit": "cm"
+      },
+      "observed": {
+        "note": "subset appears inches"
+      },
+      "rows_affected": 55
+    },
+    {
+      "type": "missingness_spike",
+      "variable": "visit_date_v2",
+      "severity": "warn",
+      "where": {
+        "dataset_column": "visit_date_v2"
+      },
+      "rows_affected": 389
+    },
+    {
+      "type": "missingness_spike",
+      "variable": "redcap_repeat_instrument",
+      "severity": "warn",
+      "where": {
+        "dataset_column": "redcap_repeat_instrument"
+      },
+      "rows_affected": 406
+    },
+    {
+      "type": "missingness_spike",
+      "variable": "redcap_repeat_instance",
+      "severity": "warn",
+      "where": {
+        "dataset_column": "redcap_repeat_instance"
+      },
+      "rows_affected": 406
+    },
+    {
+      "type": "missing_primary_key_column",
+      "variable": "record_id",
+      "severity": "error",
+      "where": {
+        "dataset_column": "record_id"
+      }
+    },
+    {
+      "type": "required_field_missing_rate_high",
+      "variable": "age",
+      "severity": "error",
+      "where": {
+        "dataset_column": "age"
+      },
+      "observed": {
+        "missing_rate": 0.264
+      },
+      "rows_affected": 132
+    },
+    {
+      "type": "matrix_nonconsecutive",
+      "variable": "adls",
+      "severity": "warn",
+      "where": {
+        "matrix_group": "adls"
+      }
+    }
+  ]
+}

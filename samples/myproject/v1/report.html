@@ -1,0 +1,54 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>DD-Val Report</title>
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; margin: 24px; }
+    h1,h2,h3 { margin: 12px 0; }
+    code { background: #f2f2f2; padding: 1px 4px; border-radius: 3px; }
+    .summary { background: #fafafa; border: 1px solid #eee; padding: 12px; }
+    .notes { color: #555; font-size: 0.95em; margin-top: 12px; }
+  </style>
+  </head>
+<body>
+  <h1>DD-Val Report</h1>
+  <div class="summary">
+    <div><b>Generated:</b> 2025-09-12T23:31:18</div>
+    <div><b>Rows:</b> 500 | <b>Cols:</b> 23 | <b>Dict fields:</b> 18</div>
+    <div><b>Primary key:</b> record_id (blanks=500)</div>
+  </div>
+  <h3>Must-fix (errors)</h3><ul><li><code>record_id</code> — <b>missing_column_in_data</b> [ERROR] — column=record_id</li>
+<li><code>pregnant</code> — <b>missing_column_in_data</b> [ERROR] — column=pregnant</li>
+<li><code>symptoms</code> — <b>checkbox_expansion_mismatch</b> [ERROR] — column=symptoms</li>
+<li><code>age</code> — <b>type_mismatch</b> [ERROR] — rows_affected=50; column=age; examples: 63x, 57x, 56x, 23x, 43x</li>
+<li><code>height_cm</code> — <b>type_mismatch</b> [ERROR] — rows_affected=65; column=height_cm; examples: 152.4x, 182.0x, 168.7x, 189.1x, 163.2x</li>
+<li><code>weight_kg</code> — <b>type_mismatch</b> [ERROR] — rows_affected=63; column=weight_kg; examples: 74.9x, 87.6x, 99.9x, 76.9x, 77.2x</li>
+<li><code>visit_date_v1</code> — <b>type_mismatch</b> [ERROR] — rows_affected=102; column=visit_date_v1; examples: 05/05/2024, 04/28/2024, 03/07/2024, 10/07/2024, 12/01/2024</li>
+<li><code>visit_date_v2</code> — <b>type_mismatch</b> [ERROR] — rows_affected=22; column=visit_date_v2; examples: 06/02/2024, 07/06/2024, 12/08/2024, 12/27/2024, 09/27/2024</li>
+<li><code>bp_sys</code> — <b>type_mismatch</b> [ERROR] — rows_affected=76; column=sbp; examples: 92x, 120x, 134x, 170x, 134x</li>
+<li><code>bp_dia</code> — <b>type_mismatch</b> [ERROR] — rows_affected=78; column=bp_dia; examples: 67x, 65x, 80x, 58x, 60x</li>
+<li><code>record_id</code> — <b>missing_primary_key_column</b> [ERROR] — column=record_id</li>
+<li><code>age</code> — <b>required_field_missing_rate_high</b> [ERROR] — rows_affected=132; column=age</li></ul>
+  <h3>Nice-to-fix (warnings)</h3><ul><li><code>extra_col</code> — <b>extra_column_in_data</b> [WARN] — column=extra_col</li>
+<li><code>bp_sys</code> — <b>rename_drift</b> [WARN] — column=sbp</li>
+<li><code>height_cm</code> — <b>unit_anomaly</b> [WARN] — rows_affected=55; column=height_cm</li>
+<li><code>visit_date_v2</code> — <b>missingness_spike</b> [WARN] — rows_affected=389; column=visit_date_v2</li>
+<li><code>redcap_repeat_instrument</code> — <b>missingness_spike</b> [WARN] — rows_affected=406; column=redcap_repeat_instrument</li>
+<li><code>redcap_repeat_instance</code> — <b>missingness_spike</b> [WARN] — rows_affected=406; column=redcap_repeat_instance</li>
+<li><code>adls</code> — <b>matrix_nonconsecutive</b> [WARN]</li></ul>
+  <h3>Info</h3><ul><li><code>dataset</code> — <b>longitudinal_context_detected</b> [INFO] — present=redcap_event_name,redcap_repeat_instance,redcap_repeat_instrument; distinct_events=2; top_events=baseline_arm_1=255, followup_arm_1=245; repeat_rate=0.188</li>
+<li><code>dataset</code> — <b>export_mode_labels_detected</b> [INFO] — label_rate=1.0; fields_checked=5 label_fields=5; suppressed_domain_findings=5</li></ul>
+  <div class='notes'><b>Note:</b> Domain mismatches were suppressed because the dataset appears label-exported.</div>
+  <h3>Query Pack</h3>
+  <h4>Errors (12)</h4>
+  <ul>
+    <li>age: Required field has high missing rate. Review branching or enforce entry.</li><li>age: Validated as numeric but some values do not parse (e.g., [&#39;63x&#39;, &#39;57x&#39;, &#39;56x&#39;]). Should validation change or data be recoded?</li><li>bp_dia: Validated as numeric but some values do not parse (e.g., [&#39;67x&#39;, &#39;65x&#39;, &#39;80x&#39;]). Should validation change or data be recoded?</li><li>bp_sys: Validated as numeric but some values do not parse (e.g., [&#39;92x&#39;, &#39;120x&#39;, &#39;134x&#39;]). Should validation change or data be recoded?</li><li>height_cm: Validated as numeric but some values do not parse (e.g., [&#39;152.4x&#39;, &#39;182.0x&#39;, &#39;168.7x&#39;]). Should validation change or data be recoded?</li><li>pregnant: Defined in dictionary but missing from dataset. Should this be added to the next export or removed from the dictionary?</li><li>record_id: Defined in dictionary but missing from dataset. Should this be added to the next export or removed from the dictionary?</li><li>record_id: Primary key column missing. Add this column to the export.</li><li>symptoms: Checkbox columns do not match choices. Align dataset columns with Column F codes.</li><li>visit_date_v1: Validated as date_ymd but some values do not parse (e.g., [&#39;05/05/2024&#39;, &#39;04/28/2024&#39;, &#39;03/07/2024&#39;]). Should validation change or data be recoded?</li><li>visit_date_v2: Validated as date_ymd but some values do not parse (e.g., [&#39;06/02/2024&#39;, &#39;07/06/2024&#39;, &#39;12/08/2024&#39;]). Should validation change or data be recoded?</li><li>weight_kg: Validated as numeric but some values do not parse (e.g., [&#39;74.9x&#39;, &#39;87.6x&#39;, &#39;99.9x&#39;]). Should validation change or data be recoded?</li>
+  </ul>
+  <h4>Warnings (7)</h4>
+  <ul>
+    <li>adls: Matrix fields are not consecutive in dictionary. Reorder so they appear together.</li><li>bp_sys: Appears renamed in dataset to &#39;sbp&#39;. Align names or update dictionary.</li><li>extra_col: Present in dataset but not in dictionary. Should we add it to the dictionary or exclude it from analysis?</li><li>height_cm: Numeric values suggest alternate unit for a subset. Confirm units or recode.</li><li>redcap_repeat_instance: missingness_spike — please review.</li><li>redcap_repeat_instrument: missingness_spike — please review.</li><li>visit_date_v2: missingness_spike — please review.</li>
+  </ul>
+</body>
+</html>
