@@ -120,6 +120,13 @@ dmypy.json
 report.html
 findings.json
 
+# But allow in samples/
+!samples/**/*.csv
+!samples/**/*.xlsx
+!samples/**/*.parquet
+!samples/**/report.html
+!samples/**/findings.json
+
 # IDE
 .vscode/
 .idea/
