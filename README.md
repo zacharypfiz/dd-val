@@ -7,6 +7,12 @@ Generate a deterministic REDCap evaluation corpus, validate datasets against dic
 - Python 3.10+
 - uv (https://docs.astral.sh/uv/)
 
+## 🖥️ Demo
+
+Here's a quick demo of `dd-val` in action:
+
+![DD-Val Demo](docs/demo.gif)
+
 ## Workflows
 
 1) Explore the seeded corpus
