@@ -223,3 +223,11 @@ When label-export mode is detected, the report includes a note indicating that d
 ## Raw vs. Label exports
 
 If the dataset appears to contain labels instead of codes for categorical fields, `dd-val` emits `export_mode_labels_detected` (info) and suppresses otherwise noisy `domain_mismatch` errors. Re‑export datasets in raw (codes) mode or map labels to codes for accurate validation.
+
+## Quick Self‑Test
+
+Run a fast, deterministic end‑to‑end check (seed → validate → score):
+```
+PYTHONPATH=. uv run scripts/selftest.py --projects 3 --rows 200
+```
+Exits non‑zero if clean runs have errors or if per‑type F1 < 0.90 on perturbed runs. Add `--keep` to keep the temp corpus for inspection.

@@ -62,6 +62,9 @@ def check_columns(dict_: Dictionary, dataset_cols: List[str]) -> List[Finding]:
     ds_cols: Set[str] = set(dataset_cols)
     findings: List[Finding] = []
 
+    # Determine primary key similarly to primary key check; avoid double-reporting
+    pk_var: Optional[str] = "record_id" if "record_id" in dataset_cols else (dict_.fields[0].variable if dict_.fields else None)
+
     # Detect if some missing columns are covered by rename hints
     covered_by_rename: Set[str] = set()
     for orig, hints in _RENAME_HINTS.items():
@@ -84,7 +87,7 @@ def check_columns(dict_: Dictionary, dataset_cols: List[str]) -> List[Finding]:
                         )
                     )
         else:
-            if f.variable not in ds_cols and f.variable not in covered_by_rename:
+            if f.variable not in ds_cols and f.variable not in covered_by_rename and f.variable != pk_var:
                 findings.append(
                     Finding(
                         type="missing_column_in_data",
@@ -528,16 +531,45 @@ def check_unit_anomaly(dict_: Dictionary, dataset_path: str, dataset_cols: List[
 
 
 def check_branching(dict_: Dictionary, dataset_path: str, dataset_cols: List[str]) -> List[Finding]:
-    # Minimal logic: detect pregnant=1 when sex=0 for condition [sex] = '1'
+    # Detect violations of simple branching: pregnant only allowed when sex = '1' (Female)
+    # Handle both raw codes and label-exported values using dictionary choices.
     if "sex" not in dataset_cols or "pregnant" not in dataset_cols:
         return []
     cond = dict_.by_var.get("pregnant").branching_logic if dict_.by_var.get("pregnant") else ""
     if "[sex]" not in cond:
         return []
+    # Build normalization sets from dictionary choices (fallback to common labels)
+    sex_field = dict_.by_var.get("sex")
+    preg_field = dict_.by_var.get("pregnant")
+    male_tokens: Set[str] = {"0", "male"}
+    female_tokens: Set[str] = {"1", "female"}
+    preg_yes_tokens: Set[str] = {"1", "yes", "true"}
+    if sex_field and sex_field.choices:
+        for code, lbl in sex_field.choices:
+            tok = (lbl or "").strip().lower()
+            if code == "0":
+                male_tokens.add(code)
+                if tok:
+                    male_tokens.add(tok)
+            if code == "1":
+                female_tokens.add(code)
+                if tok:
+                    female_tokens.add(tok)
+    if preg_field and preg_field.choices:
+        for code, lbl in preg_field.choices:
+            tok = (lbl or "").strip().lower()
+            if code == "1":
+                preg_yes_tokens.add(code)
+                if tok:
+                    preg_yes_tokens.add(tok)
+
     vals = _collect_values(dataset_path, ["sex", "pregnant"])
     affected = 0
     for s, p in zip(vals["sex"], vals["pregnant"]):
-        if s == "0" and p == "1":
+        s_norm = (s or "").strip().lower()
+        p_norm = (p or "").strip().lower()
+        # Violation when sex indicates male and pregnant indicates yes
+        if s_norm in male_tokens and p_norm in preg_yes_tokens:
             affected += 1
     if affected:
         return [
