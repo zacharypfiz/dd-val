@@ -10,6 +10,12 @@ Here's a quick demo of `dd-val` in action:
 
 ![DD-Val Demo](docs/demo.gif)
 
+### Sample Report
+
+![HTML Report 1](docs/html_report_1.png)
+
+![HTML Report 2](docs/html_report_2.png)
+
 ## Requirements
 
 - Python 3.10+
