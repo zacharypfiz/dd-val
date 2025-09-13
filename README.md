@@ -1,4 +1,4 @@
-# DD‑Val: REDCap Corpus + Scoring
+# DD‑Val: Data Dictionary Validator for REDCap
 
 Generate a deterministic REDCap evaluation corpus, validate datasets against dictionaries, and score findings against a gold standard. Ships with a reference validator (`dd-val`) and supports bring‑your‑own validator.
 
