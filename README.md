@@ -1,17 +1,19 @@
 # DD‑Val: Data Dictionary Validator for REDCap
 
+DD-Val is a command-line tool that automates the tedious process of validating REDCap datasets against their data dictionaries, turning weeks of back-and-forth into a single, actionable report.
+
 Generate a deterministic REDCap evaluation corpus, validate datasets against dictionaries, and score findings against a gold standard. Ships with a reference validator (`dd-val`) and supports bring‑your‑own validator.
-
-## Requirements
-
-- Python 3.10+
-- uv (https://docs.astral.sh/uv/)
 
 ## 🖥️ Demo
 
 Here's a quick demo of `dd-val` in action:
 
 ![DD-Val Demo](docs/demo.gif)
+
+## Requirements
+
+- Python 3.10+
+- uv (https://docs.astral.sh/uv/)
 
 ## Workflows
 
