@@ -1,0 +1,118 @@
+[
+  {
+    "type": "missing_column_in_data",
+    "variable": "bp_dia",
+    "rows_affected": 500
+  },
+  {
+    "type": "extra_column_in_data",
+    "variable": "extra_col",
+    "rows_affected": 500
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "record_id",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 78
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "age",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 86
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "height_cm",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 82
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "weight_kg",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 75
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "bp_sys",
+    "expected": "numeric",
+    "observed": "string",
+    "rows_affected": 80
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v1",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 113
+  },
+  {
+    "type": "type_mismatch",
+    "variable": "visit_date_v2",
+    "expected": "date_ymd",
+    "observed": "date_mdy",
+    "rows_affected": 92
+  },
+  {
+    "type": "unit_anomaly",
+    "variable": "height_cm",
+    "expected_unit": "cm",
+    "note": "subset appears inches",
+    "rows_affected": 38
+  },
+  {
+    "type": "missingness_spike",
+    "variable": "visit_date_v2",
+    "rows_affected": 398
+  },
+  {
+    "type": "rename_drift",
+    "variable": "bp_sys",
+    "observed": "sbp",
+    "rows_affected": 500
+  },
+  {
+    "type": "checkbox_expansion_mismatch",
+    "variable": "symptoms",
+    "observed_added": [
+      "symptoms___999"
+    ],
+    "rows_affected": 500
+  },
+  {
+    "type": "branching_mismatch",
+    "variable": "pregnant",
+    "condition": "[sex] = '1'",
+    "rows_affected": 56
+  },
+  {
+    "type": "matrix_nonconsecutive",
+    "variable": "adls",
+    "rows_affected": 0
+  },
+  {
+    "type": "duplicate_primary_key_values",
+    "variable": "record_id",
+    "rows_affected": 51
+  },
+  {
+    "type": "required_field_missing_rate_high",
+    "variable": "age",
+    "rows_affected": 156
+  },
+  {
+    "type": "export_mode_labels_detected",
+    "variable": "dataset",
+    "rows_affected": 500
+  },
+  {
+    "type": "longitudinal_context_detected",
+    "variable": "dataset",
+    "rows_affected": 500
+  }
+]
